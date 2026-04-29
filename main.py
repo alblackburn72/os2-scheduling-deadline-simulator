@@ -1,4 +1,5 @@
 from scheduler.algorithms.fcfs import schedule_fcfs
+from scheduler.metrics import calculate_metrics
 from scheduler.models import Process
 
 
@@ -10,6 +11,7 @@ def main() -> None:
     ]
 
     scheduled_processes = schedule_fcfs(processes)
+    metrics = calculate_metrics("FCFS", scheduled_processes)
 
     for process in scheduled_processes:
         print(
@@ -21,6 +23,9 @@ def main() -> None:
             f"response={process.response_time}, "
             f"deadline_missed={process.deadline_missed} "
         )
+
+    print()
+    print(metrics)
 
 
 if __name__ == "__main__":
