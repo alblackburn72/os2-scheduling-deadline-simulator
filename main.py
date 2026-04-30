@@ -1,5 +1,6 @@
 from scheduler.algorithms.fcfs import schedule_fcfs
 from scheduler.algorithms.rr import schedule_rr
+from scheduler.algorithms.spn import schedule_spn
 from scheduler.metrics import calculate_metrics
 from scheduler.models import Process, ScheduledProcess
 
@@ -30,12 +31,16 @@ def main() -> None:
 
     fcfs_result = schedule_fcfs(processes)
     rr_result = schedule_rr(processes, time_quantum=2)
+    spn_result = schedule_spn(processes)
 
     print_scheduled_processes("FCFS", fcfs_result)
     print(calculate_metrics("FCFS", fcfs_result))
 
     print_scheduled_processes("Round Robin", rr_result)
     print(calculate_metrics("Round Robin", rr_result))
+
+    print_scheduled_processes("SPN", spn_result)
+    print(calculate_metrics("SPN", spn_result))
 
 
 if __name__ == "__main__":
