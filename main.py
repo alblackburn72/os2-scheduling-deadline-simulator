@@ -6,9 +6,10 @@ from scheduler.algorithms.rr import schedule_rr
 from scheduler.algorithms.spn import schedule_spn
 from scheduler.algorithms.srt import schedule_srt
 from scheduler.algorithms.hrrn import schedule_hrrn
-from scheduler.metrics import calculate_metrics
 from scheduler.models import ScheduledProcess
 from scheduler.workload_loader import load_process_from_json
+from scheduler.metrics import SchedulingMetrics, calculate_metrics
+from scheduler.csv_exporter import export_metrics_to_csv, export_schedule_to_csv
 
 DEFAULT_WORKLOAD_PATH = Path("data/workload_basic.json")
 
@@ -27,6 +28,12 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--quantum", type=int, default=2, help="Time quantum for Round Robin scheduling"
+    )
+
+    parser.add_argument(
+        "--output-dir",
+        default="results",
+        help="Directory where CSV result files will be saved",
     )
 
     return parser.parse_args()
@@ -58,26 +65,35 @@ def main() -> None:
     print(f"Process count: {len(processes)}")
     print(f"Round Robin quantum: {args.quantum}")
 
-    fcfs_result = schedule_fcfs(processes)
-    rr_result = schedule_rr(processes, time_quantum=args.quantum)
-    spn_result = schedule_spn(processes)
-    srt_result = schedule_srt(processes)
-    hrrn_result = schedule_hrrn(processes)
+    schedules = {
+        "FCFS": schedule_fcfs(processes),
+        "Round Robin": schedule_rr(processes, time_quantum=args.quantum),
+        "SPN": schedule_spn(processes),
+        "SRT": schedule_srt(processes),
+        "HRRN": schedule_hrrn(processes),
+    }
 
-    print_scheduled_processes("FCFS", fcfs_result)
-    print(calculate_metrics("FCFS", fcfs_result))
+    all_metrics: list[SchedulingMetrics] = []
 
-    print_scheduled_processes("Round Robin", rr_result)
-    print(calculate_metrics("Round Robin", rr_result))
+    for algorithm_name, scheduled_processes in schedules.items():
+        print_scheduled_processes(algorithm_name, scheduled_processes)
 
-    print_scheduled_processes("SPN", spn_result)
-    print(calculate_metrics("SPN", spn_result))
+        metrics = calculate_metrics(algorithm_name, scheduled_processes)
+        all_metrics.append(metrics)
 
-    print_scheduled_processes("SRT", srt_result)
-    print(calculate_metrics("SRT", srt_result))
+        print(metrics)
 
-    print_scheduled_processes("HRRN", hrrn_result)
-    print(calculate_metrics("HRRN", hrrn_result))
+    output_dir = Path(args.output_dir)
+
+    metrics_output_path = output_dir / "metrics.csv"
+    schedule_output_path = output_dir / "schedule.csv"
+
+    export_metrics_to_csv(all_metrics, metrics_output_path)
+    export_schedule_to_csv(schedules, schedule_output_path)
+
+    print()
+    print(f"Metrics exported to: {metrics_output_path}")
+    print(f"Schedule exported to: {schedule_output_path}")
 
 
 if __name__ == "__main__":
