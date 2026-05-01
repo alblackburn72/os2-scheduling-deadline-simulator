@@ -1,0 +1,20 @@
+[
+  {
+    "pid": "P1",
+    "arrival_time": 0,
+    "burst_time": 8,
+    "deadline": 12
+  },
+  {
+    "pid": "P2",
+    "arrival_time": 1,
+    "burst_time": 4,
+    "deadline": 7
+  },
+  {
+    "pid": "P3",
+    "arrival_time": 2,
+    "burst_time": 2,
+    "deadline": 6
+  }
+]
