@@ -64,6 +64,7 @@ def load_process_from_json(file_path: str | Path) -> list[Process]:
                 deadline=deadline,
                 memory_tier=cast(MemoryTier, memory_tier_value),
                 memory_intensity=memory_intensity,
+                base_burst_time=burst_time,
             )
         )
     return processes

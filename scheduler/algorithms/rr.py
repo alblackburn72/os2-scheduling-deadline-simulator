@@ -91,6 +91,7 @@ def schedule_rr(
                     completion_time=current_time,
                     memory_tier=process.memory_tier,
                     memory_intensity=process.memory_intensity,
+                    base_burst_time=process.resolved_base_burst_time,
                 )
             )
         else:

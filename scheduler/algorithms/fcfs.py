@@ -38,6 +38,7 @@ def schedule_fcfs(processes: list[Process]) -> list[ScheduledProcess]:
             completion_time=completion_time,
             memory_tier=process.memory_tier,
             memory_intensity=process.memory_intensity,
+            base_burst_time=process.resolved_base_burst_time,
         )
 
         scheduled_processes.append(scheduled_process)

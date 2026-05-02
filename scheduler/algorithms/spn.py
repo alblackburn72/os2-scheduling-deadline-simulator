@@ -57,6 +57,7 @@ def schedule_spn(processes: list[Process]) -> list[ScheduledProcess]:
                 completion_time=completion_time,
                 memory_tier=selected_process.memory_tier,
                 memory_intensity=selected_process.memory_intensity,
+                base_burst_time=selected_process.resolved_base_burst_time,
             )
         )
 

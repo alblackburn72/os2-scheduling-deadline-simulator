@@ -26,6 +26,10 @@ class Process:
     memory_intensity:
       Koliko proces zavisi od pristupa memorije.
       Što veća vrednost znači da će proces biti više utican od spore memorije
+
+    base_burst_time:
+      burst_time pre nanosenja bilo kakvog memory penalty
+      Ako je None, burst_time je base value
     """
 
     pid: str
@@ -35,6 +39,20 @@ class Process:
 
     memory_tier: MemoryTier = "local_dram"
     memory_intensity: float = 1.0
+
+    base_burst_time: int | None = None
+
+    @property
+    def resolved_base_burst_time(self) -> int:
+        return (
+            self.base_burst_time
+            if self.base_burst_time is not None
+            else self.burst_time
+        )
+
+    @property
+    def effective_burst_time(self) -> int:
+        return self.burst_time
 
 
 @dataclass(frozen=True)
@@ -53,6 +71,19 @@ class ScheduledProcess:
     completion_time: int
     memory_tier: MemoryTier = "local_dram"
     memory_intensity: float = 1.0
+    base_burst_time: int | None = None
+
+    @property
+    def resolved_base_burst_time(self) -> int:
+        return (
+            self.base_burst_time
+            if self.base_burst_time is not None
+            else self.burst_time
+        )
+
+    @property
+    def effective_burst_time(self) -> int:
+        return self.burst_time
 
     @property
     def turnaround_time(self) -> int:

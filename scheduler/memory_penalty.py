@@ -52,6 +52,12 @@ def apply_memory_penalty(
     for process in processes:
         effective_burst_time = calculate_effective_burst_time(process, config)
 
-        adjusted_processes.append(replace(process, burst_time=effective_burst_time))
+        adjusted_processes.append(
+            replace(
+                process,
+                burst_time=effective_burst_time,
+                base_burst_time=process.resolved_base_burst_time,
+            )
+        )
 
     return adjusted_processes

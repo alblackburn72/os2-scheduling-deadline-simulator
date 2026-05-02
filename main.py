@@ -61,6 +61,8 @@ def print_scheduled_processes(
     for process in scheduled_processes:
         print(
             f"{process.pid}: "
+            f"base_burst={process.resolved_base_burst_time}, "
+            f"effective_burst={process.effective_burst_time}, "
             f"start={process.start_time}, "
             f"completion={process.completion_time}, "
             f"turnaround={process.turnaround_time}, "
