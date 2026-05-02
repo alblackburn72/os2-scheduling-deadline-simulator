@@ -10,6 +10,7 @@ from scheduler.models import ScheduledProcess
 from scheduler.workload_loader import load_process_from_json
 from scheduler.metrics import SchedulingMetrics, calculate_metrics
 from scheduler.csv_exporter import export_metrics_to_csv, export_schedule_to_csv
+from scheduler.memory_penalty import MemoryPenaltyConfig, apply_memory_penalty
 
 DEFAULT_WORKLOAD_PATH = Path("data/workload_basic.json")
 
@@ -36,6 +37,19 @@ def parse_args() -> argparse.Namespace:
         help="Directory where CSV result files will be saved",
     )
 
+    parser.add_argument(
+        "--enable-memory-penalty",
+        action="store_true",
+        help="Enable memory penalty model",
+    )
+
+    parser.add_argument(
+        "--penalty-factor",
+        type=float,
+        default=0.5,
+        help="Penalty factor for cxl_like_memory processes",
+    )
+
     return parser.parse_args()
 
 
@@ -60,6 +74,19 @@ def main() -> None:
     args = parse_args()
 
     processes = load_process_from_json(args.workload_path)
+
+    if args.penalty_factor < 0:
+        raise ValueError("penalty_factor must be >= 0")
+
+    if args.enable_memory_penalty:
+        memory_penalty_config = MemoryPenaltyConfig(penalty_factor=args.penalty_factor)
+
+        processes = apply_memory_penalty(processes, memory_penalty_config)
+
+        print("Memory penalty: enabled")
+        print(f"Penalty factor: {args.penalty_factor}")
+    else:
+        print("Memory penalty: disabled")
 
     print(f"Loaded workload: {args.workload_path}")
     print(f"Process count: {len(processes)}")

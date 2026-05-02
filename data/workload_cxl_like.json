@@ -1,0 +1,37 @@
+[
+  {
+    "pid": "P1",
+    "arrival_time": 0,
+    "burst_time": 5,
+    "deadline": 9,
+    "memory_tier": "local_dram",
+    "memory_intensity": 0.2
+  },
+
+  {
+    "pid": "P2",
+    "arrival_time": 1,
+    "burst_time": 4,
+    "deadline": 10,
+    "memory_tier": "cxl_like_memory",
+    "memory_intensity": 1.0
+  },
+
+  {
+    "pid": "P3",
+    "arrival_time": 2,
+    "burst_time": 3,
+    "deadline": 9,
+    "memory_tier": "cxl_like_memory",
+    "memory_intensity": 2.0
+  },
+
+  {
+    "pid": "P4",
+    "arrival_time": 4,
+    "burst_time": 2,
+    "deadline": 12,
+    "memory_tier": "local_dram",
+    "memory_intensity": 0.5
+  }
+]
