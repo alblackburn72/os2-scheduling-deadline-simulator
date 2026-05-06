@@ -15,7 +15,7 @@ class MemoryPenaltyConfig:
     - 1.00 - 100% dodatni trosak po memory_intensity jedinici
     """
 
-    penalty_factor: float = 0.5
+    memory_penalty_factor: float = 0.5
 
 
 def calculate_effective_burst_time(
@@ -25,15 +25,15 @@ def calculate_effective_burst_time(
     Racuna efektivan burst time nakon usporenja memorije
     local_dram:
       Nema penala
-    cxl_like_memory:
+    remote_memory:
       povecan burst_time na osnovu memory_intensity
     Formula:
-      effective_burst_time = ceil(burst_time * (1 + penalty_factor * memory_intensity))
+      effective_burst_time = ceil(burst_time * (1 + memory_penalty_factor * memory_intensity))
     """
     if process.memory_tier == "local_dram":
         return process.burst_time
 
-    penalty_multiplier = 1 + config.penalty_factor * process.memory_intensity
+    penalty_multiplier = 1 + config.memory_penalty_factor * process.memory_intensity
 
     return max(1, ceil(process.burst_time * penalty_multiplier))
 

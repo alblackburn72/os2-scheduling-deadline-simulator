@@ -13,7 +13,7 @@
     "arrival_time": 1,
     "burst_time": 4,
     "deadline": 10,
-    "memory_tier": "cxl_like_memory",
+    "memory_tier": "remote_memory",
     "memory_intensity": 1.0
   },
 
@@ -22,7 +22,7 @@
     "arrival_time": 2,
     "burst_time": 3,
     "deadline": 9,
-    "memory_tier": "cxl_like_memory",
+    "memory_tier": "remote_memory",
     "memory_intensity": 2.0
   },
 

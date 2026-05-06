@@ -36,10 +36,10 @@ def load_process_from_json(file_path: str | Path) -> list[Process]:
 
         memory_tier_value = item.get("memory_tier", "local_dram")
 
-        if memory_tier_value not in ("local_dram", "cxl_like_memory"):
+        if memory_tier_value not in ("local_dram", "remote_memory"):
             raise ValueError(
                 f"Invalid memory_tier '{memory_tier_value}' in process {pid}"
-                "Expected 'local_dram' or 'cxl_like_memory'"
+                "Expected 'local_dram' or 'remote_memory'"
             )
 
         memory_intensity = float(item.get("memory_intensity", 1.0))

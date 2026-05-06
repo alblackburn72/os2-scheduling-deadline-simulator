@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-MemoryTier = Literal["local_dram", "cxl_like_memory"]
+MemoryTier = Literal["local_dram", "remote_memory"]
 
 
 @dataclass(frozen=True)
@@ -21,7 +21,7 @@ class Process:
     memory_tier:
       Simulirana memorijska lokacija
       Za sad ovo neće uticati na izvršavanje, ali kasnije će se koristiti za
-      simuliranje CXL-like sporije memorije
+      simuliranje daljinske sporije memorije
 
     memory_intensity:
       Koliko proces zavisi od pristupa memorije.

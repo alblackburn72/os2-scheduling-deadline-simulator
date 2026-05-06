@@ -44,10 +44,10 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--penalty-factor",
+        "--memory-penalty-factor",
         type=float,
         default=0.5,
-        help="Penalty factor for cxl_like_memory processes",
+        help="Penalty factor for remote_memory processes",
     )
 
     return parser.parse_args()
@@ -77,16 +77,18 @@ def main() -> None:
 
     processes = load_process_from_json(args.workload_path)
 
-    if args.penalty_factor < 0:
-        raise ValueError("penalty_factor must be >= 0")
+    if args.memory_penalty_factor < 0:
+        raise ValueError("memory_penalty_factor must be >= 0")
 
     if args.enable_memory_penalty:
-        memory_penalty_config = MemoryPenaltyConfig(penalty_factor=args.penalty_factor)
+        memory_penalty_config = MemoryPenaltyConfig(
+            memory_penalty_factor=args.memory_penalty_factor
+        )
 
         processes = apply_memory_penalty(processes, memory_penalty_config)
 
         print("Memory penalty: enabled")
-        print(f"Penalty factor: {args.penalty_factor}")
+        print(f"Penalty factor: {args.memory_penalty_factor}")
     else:
         print("Memory penalty: disabled")
 
