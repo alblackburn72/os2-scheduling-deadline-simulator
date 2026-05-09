@@ -1,5 +1,7 @@
 import argparse
 import csv
+import colorsys
+import random
 from collections import defaultdict
 from pathlib import Path
 
@@ -25,6 +27,42 @@ def parse_args() -> argparse.Namespace:
     )
 
     return parser.parse_args()
+
+
+def build_process_color(
+    process_ids: list[str],
+) -> dict[str, tuple[float, float, float]]:
+    """
+    Dodeljujem razlicite boje za svaki proces. Boje se generisu automatski za svaki proces.
+    """
+
+    rng = random.Random(42)
+
+    count = max(1, len(process_ids))
+    hues = [index / count for index in range(count)]
+    rng.shuffle(hues)
+
+    process_colors: dict[str, tuple[float, float, float]] = {}
+
+    for pid, hue in zip(process_ids, hues):
+        saturation = 0.65 + 0.15 * rng.random()
+        value = 0.75 + 0.15 * rng.random()
+
+        process_colors[pid] = colorsys.hsv_to_rgb(hue, saturation, value)
+
+    return process_colors
+
+
+def get_text_color(rgb_color: tuple[float, float, float]) -> str:
+    """
+    Bira se crni ili beli tekst u zavisnosti od osvetljenja pozadine, da
+    mozemo da procitamo oznaku procesa
+    """
+
+    red, green, blue = rgb_color
+    luminance = 0.299 * red + 0.587 * green + 0.114 * blue
+
+    return "black" if luminance > 0.6 else "white"
 
 
 def load_timeline_rows(input_path: Path) -> list[dict[str, str]]:
@@ -64,6 +102,8 @@ def plot_timeline_for_algorithms(
     process_ids = sorted({row["pid"] for row in rows})
     process_positions = {pid: index * 10 for index, pid in enumerate(process_ids)}
 
+    process_colors = build_process_color(process_ids)
+
     plt.figure(figsize=(10, 4))
 
     for row in rows:
@@ -71,10 +111,24 @@ def plot_timeline_for_algorithms(
         start_time = int(row["start_time"])
         duration = int(row["duration"])
 
+        color = process_colors[pid]
+        y_position = process_positions[pid]
+
         plt.broken_barh(
             [(start_time, duration)],
             (process_positions[pid], 8),
-            label=pid,
+            facecolors=color,
+            edgecolors="black",
+        )
+
+        plt.text(
+            start_time + duration / 2,
+            y_position + 4,
+            pid,
+            ha="center",
+            va="center",
+            fontsize=9,
+            color=get_text_color(color),
         )
 
     y_ticks = [position + 4 for position in process_positions.values()]
