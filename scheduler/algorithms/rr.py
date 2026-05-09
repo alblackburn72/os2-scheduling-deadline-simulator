@@ -1,12 +1,18 @@
 from collections import deque
 
-from scheduler.models import Process, ScheduledProcess
+from scheduler.models import (
+    Process,
+    ScheduledProcess,
+    ExecutionSegment,
+    SchedulingResult,
+)
+from scheduler.timeline import add_exec_segment
 
 
 def schedule_rr(
     processes: list[Process],
     time_quantum: int,
-) -> list[ScheduledProcess]:
+) -> SchedulingResult:
     """
     Round Robin rasporedjivanje.
 
@@ -35,6 +41,7 @@ def schedule_rr(
 
     first_start_times: dict[int, int] = {}
     completed_porcesses: list[ScheduledProcess] = []
+    execution_segments: list[ExecutionSegment] = []
 
     ready_queue: deque[int] = deque()
 
@@ -68,8 +75,16 @@ def schedule_rr(
 
         run_time = min(time_quantum, remaining_times[process_index])
 
+        segment_start_time = current_time
         current_time += run_time
         remaining_times[process_index] -= run_time
+
+        add_exec_segment(
+            execution_segments=execution_segments,
+            pid=process.pid,
+            start_time=segment_start_time,
+            end_time=current_time,
+        )
 
         # Tokom kvanta, novi procesi mogu da stignu
         while (
@@ -98,4 +113,6 @@ def schedule_rr(
             # Proces nije gotov, salji ga na kraj reda
             ready_queue.append(process_index)
 
-    return completed_porcesses
+    return SchedulingResult(
+        scheduled_processes=completed_porcesses, execution_segments=execution_segments
+    )

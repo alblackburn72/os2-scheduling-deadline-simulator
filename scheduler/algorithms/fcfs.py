@@ -1,7 +1,13 @@
-from scheduler.models import Process, ScheduledProcess
+from scheduler.models import (
+    Process,
+    ScheduledProcess,
+    SchedulingResult,
+    ExecutionSegment,
+)
+from scheduler.timeline import add_exec_segment
 
 
-def schedule_fcfs(processes: list[Process]) -> list[ScheduledProcess]:
+def schedule_fcfs(processes: list[Process]) -> SchedulingResult:
     """
     First-Come First-Served rasporedjivanje
 
@@ -12,6 +18,7 @@ def schedule_fcfs(processes: list[Process]) -> list[ScheduledProcess]:
     """
 
     scheduled_processes: list[ScheduledProcess] = []
+    execution_segments: list[ExecutionSegment] = []
 
     # Sortira se po arrival time
     # Ako 2 procesa dodju u isto vreme, njihov originalni red dolaska se zadrzava
@@ -28,6 +35,13 @@ def schedule_fcfs(processes: list[Process]) -> list[ScheduledProcess]:
         start_time = max(current_time, process.arrival_time)
 
         completion_time = start_time + process.burst_time
+
+        add_exec_segment(
+            execution_segments=execution_segments,
+            pid=process.pid,
+            start_time=start_time,
+            end_time=completion_time,
+        )
 
         scheduled_process = ScheduledProcess(
             pid=process.pid,
@@ -46,4 +60,6 @@ def schedule_fcfs(processes: list[Process]) -> list[ScheduledProcess]:
         # Sledeci proces ce se izvrsavati samo kad se trenutni zavrsi
         current_time = completion_time
 
-    return scheduled_processes
+    return SchedulingResult(
+        scheduled_processes=scheduled_processes, execution_segments=execution_segments
+    )

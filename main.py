@@ -9,7 +9,11 @@ from scheduler.algorithms.hrrn import schedule_hrrn
 from scheduler.models import ScheduledProcess
 from scheduler.workload_loader import load_process_from_json
 from scheduler.metrics import SchedulingMetrics, calculate_metrics
-from scheduler.csv_exporter import export_metrics_to_csv, export_schedule_to_csv
+from scheduler.csv_exporter import (
+    export_metrics_to_csv,
+    export_timeline_to_csv,
+    export_schedule_to_csv,
+)
 from scheduler.memory_penalty import MemoryPenaltyConfig, apply_memory_penalty
 
 DEFAULT_WORKLOAD_PATH = Path("data/workload_basic.json")
@@ -96,7 +100,7 @@ def main() -> None:
     print(f"Process count: {len(processes)}")
     print(f"Round Robin quantum: {args.quantum}")
 
-    schedules = {
+    scheduling_results = {
         "FCFS": schedule_fcfs(processes),
         "Round Robin": schedule_rr(processes, time_quantum=args.quantum),
         "SPN": schedule_spn(processes),
@@ -104,9 +108,19 @@ def main() -> None:
         "HRRN": schedule_hrrn(processes),
     }
 
+    completed_schedules = {
+        algorithm_name: result.scheduled_processes
+        for algorithm_name, result in scheduling_results.items()
+    }
+
+    timelines = {
+        algorithm_name: result.execution_segments
+        for algorithm_name, result in scheduling_results.items()
+    }
+
     all_metrics: list[SchedulingMetrics] = []
 
-    for algorithm_name, scheduled_processes in schedules.items():
+    for algorithm_name, scheduled_processes in completed_schedules.items():
         print_scheduled_processes(algorithm_name, scheduled_processes)
 
         metrics = calculate_metrics(algorithm_name, scheduled_processes)
@@ -117,13 +131,16 @@ def main() -> None:
     output_dir = Path(args.output_dir)
 
     metrics_output_path = output_dir / "metrics.csv"
+    timeline_output_path = output_dir / "timeline.csv"
     schedule_output_path = output_dir / "schedule.csv"
 
     export_metrics_to_csv(all_metrics, metrics_output_path)
-    export_schedule_to_csv(schedules, schedule_output_path)
+    export_timeline_to_csv(timelines, timeline_output_path)
+    export_schedule_to_csv(completed_schedules, schedule_output_path)
 
     print()
     print(f"Metrics exported to: {metrics_output_path}")
+    print(f"Timelines exported to: {timeline_output_path}")
     print(f"Schedule exported to: {schedule_output_path}")
 
 

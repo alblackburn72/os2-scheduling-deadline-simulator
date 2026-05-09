@@ -100,3 +100,30 @@ class ScheduledProcess:
     @property
     def deadline_missed(self) -> bool:
         return self.completion_time > self.deadline
+
+
+@dataclass(frozen=True)
+class ExecutionSegment:
+    pid: str
+    start_time: int
+    end_time: int
+
+    @property
+    def duration(self) -> int:
+        return self.end_time - self.start_time
+
+
+@dataclass(frozen=True)
+class SchedulingResult:
+    """
+    Pun rezultat rasporedjivanja
+
+    scheduled_processes:
+        Jedan konacan rezultat po zavrsenom procesu.
+
+    execution_segments:
+        Vremenska linija intervala procesorskog izvrsavanja.
+    """
+
+    scheduled_processes: list[ScheduledProcess]
+    execution_segments: list[ExecutionSegment]

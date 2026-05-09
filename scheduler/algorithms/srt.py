@@ -1,7 +1,13 @@
-from scheduler.models import Process, ScheduledProcess
+from scheduler.models import (
+    Process,
+    ScheduledProcess,
+    ExecutionSegment,
+    SchedulingResult,
+)
+from scheduler.timeline import add_exec_segment
 
 
-def schedule_srt(processes: list[Process]) -> list[ScheduledProcess]:
+def schedule_srt(processes: list[Process]) -> SchedulingResult:
     """
     Shortest Remaining Time
 
@@ -24,6 +30,7 @@ def schedule_srt(processes: list[Process]) -> list[ScheduledProcess]:
 
     first_start_times: dict[int, int] = {}
     completed_processes: list[ScheduledProcess] = []
+    execution_segments: list[ExecutionSegment] = []
 
     completed_indices: set[int] = set()
 
@@ -65,10 +72,18 @@ def schedule_srt(processes: list[Process]) -> list[ScheduledProcess]:
         if selected_index not in first_start_times:
             first_start_times[selected_index] = current_time
 
+        segment_start_time = current_time
         # simulira se jedna po jedna vremenska jedinica, zato sto SRT
         # moze da prekine izvrsavani proces kad god kraci proces stigne
         remaining_times[selected_index] -= 1
         current_time += 1
+
+        add_exec_segment(
+            execution_segments=execution_segments,
+            pid=selected_process.pid,
+            start_time=segment_start_time,
+            end_time=current_time,
+        )
 
         if remaining_times[selected_index] == 0:
             completed_indices.add(selected_index)
@@ -86,4 +101,6 @@ def schedule_srt(processes: list[Process]) -> list[ScheduledProcess]:
                     base_burst_time=selected_process.resolved_base_burst_time,
                 )
             )
-    return completed_processes
+    return SchedulingResult(
+        scheduled_processes=completed_processes, execution_segments=execution_segments
+    )

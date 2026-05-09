@@ -1,7 +1,13 @@
-from scheduler.models import Process, ScheduledProcess
+from scheduler.models import (
+    Process,
+    ScheduledProcess,
+    ExecutionSegment,
+    SchedulingResult,
+)
+from scheduler.timeline import add_exec_segment
 
 
-def schedule_hrrn(processes: list[Process]) -> list[ScheduledProcess]:
+def schedule_hrrn(processes: list[Process]) -> SchedulingResult:
     """
     Highest Response Ration Next
 
@@ -23,6 +29,7 @@ def schedule_hrrn(processes: list[Process]) -> list[ScheduledProcess]:
     )
 
     scheduled_processes: list[ScheduledProcess] = []
+    execution_segments: list[ExecutionSegment] = []
     current_time = 0
 
     while remaining_processes:
@@ -54,6 +61,13 @@ def schedule_hrrn(processes: list[Process]) -> list[ScheduledProcess]:
         start_time = current_time
         completion_time = start_time + selected_process.burst_time
 
+        add_exec_segment(
+            execution_segments=execution_segments,
+            pid=selected_process.pid,
+            start_time=start_time,
+            end_time=completion_time,
+        )
+
         scheduled_processes.append(
             ScheduledProcess(
                 pid=selected_process.pid,
@@ -74,4 +88,6 @@ def schedule_hrrn(processes: list[Process]) -> list[ScheduledProcess]:
             item for item in remaining_processes if item[0] != selected_index
         ]
 
-    return scheduled_processes
+    return SchedulingResult(
+        scheduled_processes=scheduled_processes, execution_segments=execution_segments
+    )

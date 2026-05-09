@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 
 from scheduler.metrics import SchedulingMetrics
-from scheduler.models import ScheduledProcess
+from scheduler.models import ScheduledProcess, ExecutionSegment
 
 
 def export_metrics_to_csv(
@@ -40,6 +40,45 @@ def export_metrics_to_csv(
                     item.deadline_miss_ratio,
                 ]
             )
+
+
+def export_timeline_to_csv(
+    timelines: dict[str, list[ExecutionSegment]],
+    output_path: str | Path,
+) -> None:
+    """
+    Izvozi segmente vremenske linije izvrsavanja u CSV file.
+
+    Bice korisno za Gantt/timeline grafik.
+    """
+
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.writer(file)
+
+        writer.writerow(
+            [
+                "algorithm_name",
+                "pid",
+                "start_time",
+                "end_time",
+                "duration",
+            ]
+        )
+
+        for algorithm_name, execution_segments in timelines.items():
+            for segment in execution_segments:
+                writer.writerow(
+                    [
+                        algorithm_name,
+                        segment.pid,
+                        segment.start_time,
+                        segment.end_time,
+                        segment.duration,
+                    ]
+                )
 
 
 def export_schedule_to_csv(
