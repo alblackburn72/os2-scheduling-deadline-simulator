@@ -1,0 +1,29 @@
+{
+  "simulation_time": 20,
+  "tasks": [
+    {
+      "task_id": "T1",
+      "period": 5,
+      "execution_time": 1,
+      "relative_deadline": 5,
+      "memory_tier": "local_dram",
+      "memory_intensity": 0.2
+    },
+    {
+      "task_id": "T2",
+      "period": 10,
+      "execution_time": 3,
+      "relative_deadline": 10,
+      "memory_tier": "local_dram",
+      "memory_intensity": 0.5
+    },
+    {
+      "task_id": "T3",
+      "period": 20,
+      "execution_time": 5,
+      "relative_deadline": 20,
+      "memory_tier": "remote_memory",
+      "memory_intensity": 1.0
+    }
+  ]
+}

@@ -127,3 +127,53 @@ class SchedulingResult:
 
     scheduled_processes: list[ScheduledProcess]
     execution_segments: list[ExecutionSegment]
+
+
+@dataclass(frozen=True)
+class PeriodicTask:
+    """
+    Predstavlja periodicni real-time task.
+
+    task_id:
+        Identifikator periodicnog taska, npr. T1.
+
+    period:
+        Na koliko vremenskih jedinica se task ponavlja.
+
+    execution_time:
+        Koliko CPU vremena treba svakoj instanci taska.
+
+    relative_deadline:
+        Deadline relativan u odnosu na arrival_time svake instance.
+        Ako T1 stigne u t=5 i relative_deadline=5, apsolutni deadline je t=10.
+
+    memory_tier:
+        Memorijski tier koji task koristi.
+
+    memory_intensity:
+        Koliko je task osetljiv na memorijski penal.
+    """
+
+    task_id: str
+    period: int
+    execution_time: int
+    relative_deadline: int
+
+    memory_tier: MemoryTier = "local_dram"
+    memory_intensity: float = 1.0
+
+
+@dataclass(frozen=True)
+class PeriodicTaskWorkload:
+    """
+    Predstavlja workload periodicnih taskova.
+
+    simulation_time:
+        Do kog vremena se generisu instance periodicnih taskova.
+
+    tasks:
+        Lista periodicnih taskova.
+    """
+
+    simulation_time: int
+    tasks: list[PeriodicTask]
