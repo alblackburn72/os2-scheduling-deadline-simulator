@@ -30,6 +30,7 @@ U radu se analiziraju sledeći algoritmi:
 - SRT
 - HRRN
 - RMS
+- EDF
 
 ### 2.2 Real-time sistemi i deadline-ovi
 
@@ -119,6 +120,27 @@ kraći period = viši prioritet
 RMS je preemptive fixed-priority algoritam.
 
 Ako stigne instanca taska sa kraćom periodom, ona može prekinuti trenutno izvršavanje taska sa nižim prioritetom.
+
+### 3.7 EDF
+
+EDF je Earliest Deadline First algoritam.
+
+To je preemptive real-time scheduling algoritam sa dinamičkim prioritetima.
+
+Za razliku od RMS-a, koji prioritet određuje prema periodi taska, EDF u svakom trenutku bira proces ili task instancu sa najranijim apsolutnim deadline-om.
+
+Pravilo je:
+
+```txt
+raniji deadline = viši prioritet
+```
+
+EDF je koristan za poređenje sa RMS-om jer predstavlja drugačiji pristup real-time raspoređivanju:
+
+- RMS koristi fixed-priority pristup,
+- EDF koristi dynamic-priority pristup.
+
+U jednostavnim slučajevima, posebno kada su relativni deadline-ovi jednaki periodama, RMS i EDF mogu dati isti raspored. Razlika postaje vidljivija u scenarijima gde taskovi imaju deadline-ove koji se ne poklapaju sa periodama.
 
 ## 4. Model procesa i workload-a
 
@@ -219,13 +241,15 @@ Cilj je da se pokaže razlika između algoritama koji favorizuje kraće procese 
 
 Cilj je proeđenje rezultata bez memorijskog penala i sa različitim vrednostima `memory_penalty_factor`
 
-### 7.4 Periodic RMS workload
+### 7.4 Periodic real-time workload
 
 `periodic_tasks_basic.json`
 
-Cilj je prikaz RMS algoritma nad periodičnim real-time taskovima.
+Cilj je prikaz RMS i EDF algoritama nad periodičnim real-time taskovima.
 
-Posebno se posmatra kako se niže-prioritetni task prekida kada stignu instance taskova sa kraćom periodom.
+Posebno se posmatra kako se niže-prioritetni task prekida kada stignu instance taskova višeg prioriteta.
+
+Kod trenutnog workload-a, RMS i EDF mogu dati isti ili veoma sličan raspored jer su relativni deadline-ovi jednaki periodama. Zbog toga je kao buduće proširenje korisno dodati poseban scenario koji eksplicitno razdvaja ponašanje RMS i EDF algoritama.
 
 ## 8. Rezultati
 
@@ -306,6 +330,16 @@ Taskovi sa kraćom periodom imaju viši prioritet.
 
 Timeline prikaz pokazuje da task sa dužom periodom može biti prekinut više puta kada stignu instance taskova višeg prioriteta.
 
+### 9.4 EDF i poređenje sa RMS-om
+
+EDF koristi dinamički prioritet zasnovan na apsolutnom deadline-u svake procesne instance.
+
+U trenutnom periodic workload-u EDF može dati isti timeline kao RMS, jer su relativni rokovi jednaki periodama. U takvom slučaju task sa kraćom periodom često ima i raniji rok, pa oba algoritma donose iste odluke.
+
+Ovo nije greška u implementaciji, već posledica izabranog workload-a.
+
+Za jasnije poređenje RMS i EDF algoritama potrebno je dodati scenario gde se perioda i deadline ne poklapaju. Na primer, task sa dužom periodom može imati kraći relativni deadline, što bi EDF-u dalo veći prioritet, dok bi RMS i dalje favorizovao task sa kraćom periodom.
+
 ## 10. Gantt / Timeline prikaz
 
 Timeline prikaz je uveden da bi se bolje objasnilo ponašanje preemptive algoritama.
@@ -347,6 +381,8 @@ Projekat pokazuje da se ponašanje scheduling algoritama značajno razlikuje u z
 Algoritam koji ima dobre prosečne metrike ne mora imati dobar deadline miss ratio.
 
 Preemptive algoritmi kao što su SRT i RMS mogu bolje reagovati u scenarijima gde je potrebno brzo odgovoriti na dolazak novih zadataka.
+
+EDF proširuje simulator dinamičkim real-time scheduling algoritmom. U kombinaciji sa RMS-om omogućava poređenje fixed-priority i dynamic-priority pristupa periodičnim real-time zadacima.
 
 Memory penalty model pokazuje da sproiji/udaljeni memorijski tier može povećati efektivno vreme izvršavanja procesa i indirektno pogoršati deadline ponašanje celog workload-a.
 

@@ -28,13 +28,20 @@ Pored osnovnog raspoređivanja, projekat uvodi i pojednostavljen model sporijeg/
 - SRT - Shortest Remaining Time
 - HRRN - Highest Response Ratio Next
 - RMS - Rate Monotonic Scheduling
+- EDF - Earliest Deadline First
 
 Prvih 5 algoritama radne nad običnim procesima definisanim kroz `arriva_time`, `burst_time` i `deadline`.
 
-RMS radi nad periodičnim real-time taskovima. Periodični taskovi se prvo pretvaraju u konkretnoe procesne instance, a zatimse raspoređuju po pravilu:
+RMS i EDF se koriste za real-time scenarije. RMS je posebno namenjen periodičnim taskovima:
 
 ```txt
 kraći period = viši prioritet
+```
+
+Dok EDF bira proces ili task instancu sa najranijim apsolutnim deadline-om:
+
+```txt
+raniji deadline = viši prioritet
 ```
 
 ## Memory penalty model
@@ -42,7 +49,7 @@ kraći period = viši prioritet
 Projekat ne simulira konkretan hardverski protokol niti stvarnu memorijsku arhitekturu. Sporija ili udaljena memorija je modelovana parametarski, kroz povećanje efektivnog vremena izvršavanja procesa.
 
 - `base_burst_time` - originalno vreme izvršavanja iz workload fajla
-- `effective_burst_time` - vreme izvršavanja koje scheduler stvarno korisit nakon primene memorijskog penala
+- `effective_burst_time` - vreme izvršavanja koje scheduler stvarno koristi nakon primene memorijskog penala
 
 Formula koja se koristi je:
 
@@ -52,14 +59,14 @@ Formula koja se koristi je:
 
 Gde je:
 
-- memory_penalty_factor - parametar koji određuje koliko je sporiji memorijski tier skuplji u simulaciji
-- memory_intensity - koliko je proces osetljiv na memorijske pristupe
+- `memory_penalty_factor` - parametar koji određuje koliko je sporiji memorijski tier skuplji u simulaciji
+- `memory_intensity` - koliko je proces osetljiv na memorijske pristupe
 
 Ako je proces u lokalnoj memoriji (DRAM), penal se ne primenjuje.
 
 Svrha modela je da omogući kontrolisanu analizu uticaja sporije memorije na scheduling mere i deadline miss ratio.
 
-## Periodični taskovi i RMS
+## Periodični taskovi, RMS i EDF
 
 Pored običnih procesa, simulator podržava i periodične real-time taskove.
 
@@ -100,9 +107,22 @@ T1_3 arrival=15
 ```
 
 RMS je preemptive fixed-priority algoritam. Prioritet se određuje na osnovu periode taska:
-`manji period = veći prioritet`
+
+```txt
+manji period = veći prioritet
+```
 
 Zbog toga task sa kraćom periodom može da prekine task sa dužom periodom.
+
+EDF, odnosno Earliest Deadline First, je preemptive dynamic-priority algoritam.
+
+Za razliku od RMS-a, EDF ne dodeljuje fiksan prioritet na osnovu periode taska. Umesto toga, u svakom trenutku bira dostupnu procesnu instancu sa najranijim apsolutnim deadline-om.
+
+Pravilo EDF algoritma je:
+
+```txt
+raniji deadline = viši prioritet
+```
 
 ## Struktura projekta
 
@@ -123,6 +143,7 @@ os2-scheduling-deadline-simulator/
 │   │   ├── fcfs.py
 │   │   ├── hrrn.py
 │   │   ├── rms.py
+│   │   ├── edf.py
 │   │   ├── rr.py
 │   │   ├── spn.py
 │   │   └── srt.py
@@ -170,33 +191,38 @@ Pokretanje workload-a sa podešenim Round Robin kvantumom (default quantum = 2):
 Pokretanje workload-a sa uključenim memory penalty modelom:
 `python .\main.py .\data\workload_remote_memory.json --enable-memory-penalty --memory-penalty-factor 0.5 --output-dir .\results\memory_penalty_factor_0_5`
 
-## Pokretanje RMS algoritma
+## Pokretanje periodičnih real-time eksperimenata
 
-Pokretanje RMS algoritma nad periodičnim taskovima:
-
-```powershell
-python .\run_rms.py
-```
-
-Eksplicitno pokretanje RMS workload-a:
+Periodični real-time eksperimenti se pokreću posebnom skriptom:
 
 ```powershell
-python .\run_rms.py .\data\periodic_tasks_basic.json
+python .\run_periodic_experiments.py
 ```
 
-Pokretanje RMS-a sa uključenim memory penalty modelom:
+Ova skripta pokreće RMS i EDF nad periodičnim workload-om sa više vrednosti `memory_penalty_factor`.
 
-```powershell
-python .\run_rms.py .\data\periodic_tasks_basic.json --enable-memory-penalty --memory-penalty-factor 0.5 --output-dir .\results\rms_memory_penalty
-```
-
-RMS runner generiše:
+Rezultati se čuvaju u:
 
 ```txt
-metrics.csv
-schedule.csv
-timeline.csv
+results/periodic_experiments/
 ```
+
+Glavni zbirni fajl za periodične eksperimente je:
+
+```txt
+results/periodic_experiments/combined_periodic_metrics.csv
+```
+
+Primeri pojedinačnih eksperimenata:
+
+```txt
+periodic_basic
+periodic_memory_penalty_factor_0_25
+periodic_memory_penalty_factor_0_5
+periodic_memory_penalty_factor_1_0
+```
+
+U svakom od ovih eksperimenata se generišu rezultati za RMS i EDF.
 
 ## Pokretanje svih eksperimenata:
 
@@ -270,7 +296,7 @@ Primer za RMS periodic workload:
 python .\plot_timeline.py --input .\results\periodic_experiments\rms_memory_penalty_factor_0_5\timeline.csv --output-dir .\results\periodic_experiments\rms_memory_penalty_factor_0_5\plots
 ```
 
-Timeline prikaz je posebno koristan za preemptive algoritme kao što su Round Robin, SRT i RMS, jer prikazuje kada je proces prekinut i kada je nastavio izvršavanje.
+Timeline prikaz je posebno koristan za preemptive algoritme kao što su Round Robin, SRT, RMS i EDF, jer prikazuje stvarne intervale izvršavanja i prekide procesa.
 
 ## Workload fajlovi
 
@@ -411,7 +437,7 @@ Zbog toga rezultate treba posmatrati kao analizu ponašanja algoritama pod kontr
 
 Implementirana je funkcionalna verzija projekta:
 
-- algoritmi raspoređivanja: FCFS, Round Robin, SPN, SRT, HRRN i RMS
+- algoritmi raspoređivanja: FCFS, Round Robin, SPN, SRT, HRRN, RMS i EDF
 - JSON workload loader za obične procese
 - JSON loader za periodične real-time taskove
 - generator procesnih instanci iz periodičnih taskova
