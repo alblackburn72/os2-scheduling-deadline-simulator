@@ -93,7 +93,67 @@ HRRN može imati dobre rezultate kada memory penalty nije uključen, ali se njeg
 
 Round Robin zadržava dobar response time, ali i dalje može imati loš deadline miss ratio, jer ne razlikuje procese po roku ili po efektivnom vremenu izvršavanja.
 
-## 6. Najstabilniji algoritmi u dosadašnjim eksperimentima
+## 6. Periodični taskovi i RMS
+
+Pored klasičnih procesa, simulator podržava i periodične real-time taskove.
+
+Periodični task se ne pojavljuje samo jednom, već se ponavlja u pravilnim vremenskim intervalima. Na primer, task `T1` sa periodom `5` i vremenom simulacije `20` generiše sledeće procesne instance:
+
+```txt
+T1_0 arrival=0
+T1_1 arrival=5
+T1_2 arrival=10
+T1_3 arrival=15
+```
+
+Ove instance se zatim raspoređuju pomoću RMS algoritma.
+
+RMS, odnosno Rate Monotonic Scheduling, je preemptive fixed-priority algoritam. Prioritet taska zavisi od njegove periode:
+`kraći period = viši prioritet`
+
+To znači da task sa kraćom periodom može da prekine izvršavanje taska sa dužom periodom.
+
+U trenutnom periodic workload-u postoje 3 taska:
+
+```txt
+T1: period = 5,  execution_time = 1
+T2: period = 10, execution_time = 3
+T3: period = 20, execution_time = 5
+```
+
+Prioriteti su zato:
+`T1 > T2 > T3`
+
+U timeline prikazu se vidi da `T3_0`, kao task sa najnižim prioritetom, može biti prekinut više puta kada stignu instance `T1` ili `T2`.
+
+Ovo pokazuje glavnu razliku između RMS-a i običnih neprekidnih algoritama: RMS je namenjen periodičnim real-time zadacima i može da reaguje na dolazak novih instanci taskova višeg prioriteta.
+
+## 7. Timeline / Gantt prikaz
+
+Simulator sada čuva i stvarne segmente izvršavanja procesa kroz `timeline.csv`.
+
+Ovo je posebno važno za preemptive algoritme kao što su:
+
+- Round Robin,
+- SRT,
+- RMS.
+
+Kod neprekidnih algoritama proces se uglavnom izvršava u jednom kontinuiranom bloku. Međutim, kod preemptive algoritama proces može biti prekinut i nastavljen kasnije.
+
+Na primer, kod SRT algoritma jedan proces može imati:
+
+```txt
+P1: 0-1
+P1: 7-14
+```
+
+To znači da je proces počeo da se izvršava, zatim je bio prekinut, pa je nastavljen kasnije.
+
+Slično tome, kod RMS algoritma niže-prioritetni periodic task može biti prekinut kada stigne nova instanca taska sa kraćom periodom.
+
+Timeline/Gantt prikaz je koristan zato što objašnjava zašto algoritmi imaju određene metrike. CSV metrike pokazuju rezultat, dok timeline pokazuje redosled izvršavanja koji je doveo do tog rezultata.
+
+## 7. Najstabilniji algoritmi u dosadašnjim eksperimentima
 
 Na osnovu trenutnih scenarija, SRT se pokazuje kao jedan od najstabilnijih algoritama u pogledu deadline ponašanja.
 
@@ -107,31 +167,37 @@ Round Robin je koristna za odzivnost, ali ne i za garantovanje rokova.
 
 FCFS je najjednostavniji, ali često najosetljiviji na problem dugog procesa koji izgladnjuje ostale.
 
-## 7. Ograničenja trenutne analize
+## 8. Ograničenja trenutne analize
 
 Trenutni simulator koristi pojednostavljen model izvršavanja procesa. Rezultate treba posmatrati kao analizu ponašanja algoritama pod kontrolisanim uslovima, a ne kao precizno merenje realnog operativnog sistema.
 
 Glavna ograničenja su:
 
-- simulator ne meri stvarno vreme izvršenja na hardveru,
+- simulator ne meri stvarno vreme izvršavanja na hardveru,
 - ne modeluje cache ponašanje,
 - ne modeluje stvarnu NUMA politiku,
 - ne modeluje migraciju memorijskih stranica,
 - ne modeluje contention na memorijskom bandwidth-u,
 - ne implementira kernel scheduler,
 - memory penalty model je linearna heuristika,
-- za preemptive algoritme se trenutno ne čuva pun execution timeline.
+- periodic task model trenutno koristi jednostavno generisanje instanci do zadatog `simulation_time`,
+- RMS eksperimenti trenutno nisu automatski uključeni u glavni `run_experiments.py`.
 
 Zbog toga je cilj simulatora da pokaže trendove i relativne razlike između algoritama, a ne da predvidi tačne performanse realnog sistema.
 
-## 8. Zaključci prve verzije
+## 9. Zaključci trenutne verzije
 
-Prva verzija simulatora pokazuje nekoliko važnih stvari:
+Trenutna verzija simulatora pokazuje nekoliko važnih stvari:
 
-1. Algoritmi sa dobrim prosečnim merama ne moraju imati dobar miss ratio.
+1. Algoritmi sa dobrim prosečnim merama ne moraju imati dobar deadline miss ratio.
 2. Round Robin daje dobar response time, ali ne garantuje završavanje pre roka.
 3. SRT često poboljšava deadline ponašanje jer može da prekine duže procese.
 4. SPN može biti dobar za kratke procese, ali može loše reagovati ako dugačak proces počne prvi.
 5. HRRN poboljšava fairness, ali nije uvek najbolji za deadline-sensitive procese.
 6. Sporiji/udaljeni memorijski tier može povećati efektivno vreme izvršavanja procesa.
 7. Memorijski penal može indirektno pogoršati i procese koji sami nisu penalizovani, jer duže čekaju na CPU.
+8. RMS omogućava analizu periodičnih real-time taskova.
+9. Kod RMS-a taskovi sa kraćom periodom imaju viši prioritet i mogu da prekinu taskove sa dužom periodom.
+10. Timeline/Gantt prikaz je koristan za razumevanje preemptive algoritama, jer prikazuje stvarne intervale izvršavanja i prekide procesa.
+
+Ovi zaključci predstavljaju osnovu za dalji seminarski rad i za proširenje simulatora dodatnim periodic workload scenarijima.

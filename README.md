@@ -1,8 +1,10 @@
 # Scheduling Deadline Simulator
 
-Ovaj projekat predstavlja simulator za poređenje uobičajenih CPU algoritama za raspoređivanje na osnovu real-time mera performansi.
+Ovaj projekat predstavlja simulator za poređenje CPU scheduling algoritama na osnovu real-time mera performansi.
 
-Glavni cilj je analiza kako se različiti algoritmi raspoređivanja ponašaju kada zadaci imaju rokove i koliko često maše iste pod uticajem sporijeg/udaljenog memorijskog tier-a.
+Glavni cilj je analiza kako se različiti algoritmi raspoređivanja ponašaju kada zadaci imaju rokove i koliko često maše rokove i kako se ponašanje menja pod uticajem sporijeg/udaljenog memorijskog tier-a.
+
+Pored klasičnih workload-a sa procesima, projekat podržava i periodične real-time taskove kroz implementaciju RMS (Rate Monotonic Scheduling) algoritma.
 
 ## Ideja projekta
 
@@ -20,11 +22,20 @@ Pored osnovnog raspoređivanja, projekat uvodi i pojednostavljen model sporijeg/
 
 ## Implementirani algoritmi:
 
-- FCFS
+- FCFS - First-Come, First-Served
 - Round Robin
-- SPN / SJF
-- SRT
-- HRRN
+- SPN / SJF - Shortest Process Next / Shortest Job First
+- SRT - Shortest Remaining Time
+- HRRN - Highest Response Ratio Next
+- RMS - Rate Monotonic Scheduling
+
+Prvih 5 algoritama radne nad običnim procesima definisanim kroz `arriva_time`, `burst_time` i `deadline`.
+
+RMS radi nad periodičnim real-time taskovima. Periodični taskovi se prvo pretvaraju u konkretnoe procesne instance, a zatimse raspoređuju po pravilu:
+
+```txt
+kraći period = viši prioritet
+```
 
 ## Memory penalty model
 
@@ -48,33 +59,88 @@ Ako je proces u lokalnoj memoriji (DRAM), penal se ne primenjuje.
 
 Svrha modela je da omogući kontrolisanu analizu uticaja sporije memorije na scheduling mere i deadline miss ratio.
 
+## Periodični taskovi i RMS
+
+Pored običnih procesa, simulator podržava i periodične real-time taskove.
+
+Periodični task se opisuje pomoću:
+
+- `task_id` - identifikator taska
+- `period` - period ponavljanja taska
+- `execution_time` - vreme izvršavanja svake instance
+- `relative_deadline` - rok relativan u odnosu na vreme dolaska instance
+- `memory_tier` - memorijski tier taska
+- `memory_intensity` - osetljivost na memorijski penal
+
+Primer periodičnog taska:
+
+```json
+{
+  "task_id": "T1",
+  "period": 5,
+  "execution_time": 1,
+  "relative_deadline": 5,
+  "memory_tier": "local_dram",
+  "memory_intensity": 0.2
+}
+```
+
+Generator periodičnih taskova od jednog taska pravi više konkretnih procesnih instanci.
+
+Na primer:
+`T1, period = 5, simulation_time = 20`
+
+generiše:
+
+```txt
+T1_0 arrival=0
+T1_1 arrival=5
+T1_2 arrival=10
+T1_3 arrival=15
+```
+
+RMS je preemptive fixed-priority algoritam. Prioritet se određuje na osnovu periode taska:
+`manji period = veći prioritet`
+
+Zbog toga task sa kraćom periodom može da prekine task sa dužom periodom.
+
 ## Struktura projekta
 
 ```txt
 os2-scheduling-deadline-simulator/
 │
 ├── data/
-│ ├── workload_basic.json
-│ ├── workload_spn_vs_hrrn.json
-│ └── workload_remote_memory.json
+│   ├── workload_basic.json
+│   ├── workload_spn_vs_hrrn.json
+│   ├── workload_remote_memory.json
+│   └── periodic_tasks_basic.json
+│
+├── docs/
+│   └── analysis.md
 │
 ├── scheduler/
-│ ├── algorithms/
-│ │ ├── fcfs.py
-│ │ ├── hrrn.py
-│ │ ├── rr.py
-│ │ ├── spn.py
-│ │ └── srt.py
-│ │
-│ ├── csv_exporter.py
-│ ├── memory_penalty.py
-│ ├── metrics.py
-│ ├── models.py
-│ └── workload_loader.py
+│   ├── algorithms/
+│   │   ├── fcfs.py
+│   │   ├── hrrn.py
+│   │   ├── rms.py
+│   │   ├── rr.py
+│   │   ├── spn.py
+│   │   └── srt.py
+│   │
+│   ├── csv_exporter.py
+│   ├── memory_penalty.py
+│   ├── metrics.py
+│   ├── models.py
+│   ├── periodic_task_generator.py
+│   ├── periodic_task_loader.py
+│   ├── timeline.py
+│   └── workload_loader.py
 │
 ├── main.py
 ├── run_experiments.py
+├── run_rms.py
 ├── plot_results.py
+├── plot_timeline.py
 ├── requirements.txt
 └── README.md
 ```
@@ -103,6 +169,34 @@ Pokretanje workload-a sa podešenim Round Robin kvantumom (default quantum = 2):
 Pokretanje workload-a sa uključenim memory penalty modelom:
 `python .\main.py .\data\workload_remote_memory.json --enable-memory-penalty --memory-penalty-factor 0.5 --output-dir .\results\memory_penalty_factor_0_5`
 
+## Pokretanje RMS algoritma
+
+Pokretanje RMS algoritma nad periodičnim taskovima:
+
+```powershell
+python .\run_rms.py
+```
+
+Eksplicitno pokretanje RMS workload-a:
+
+```powershell
+python .\run_rms.py .\data\periodic_tasks_basic.json
+```
+
+Pokretanje RMS-a sa uključenim memory penalty modelom:
+
+```powershell
+python .\run_rms.py .\data\periodic_tasks_basic.json --enable-memory-penalty --memory-penalty-factor 0.5 --output-dir .\results\rms_memory_penalty
+```
+
+RMS runner generiše:
+
+```txt
+metrics.csv
+schedule.csv
+timeline.csv
+```
+
 ## Pokretanje svih eksperimenata:
 
 Svi predefinisani eksperimenti se mogu pokrenuti komandom:
@@ -130,6 +224,22 @@ Generišu se grafikoni za:
 - average response time
 - trend deadline miss ratio kroz različite memory penalty faktore
 
+Pored zbirnih grafikona, moguće je generisati i Gantt/timeline prikaz izvršavanja procesa.
+
+Primer za običan workload:
+
+```powershell
+python .\plot_timeline.py --input .\results\timeline_test\timeline.csv --output-dir .\results\timeline_test\plots
+```
+
+Primer za RMS workload:
+
+```powershell
+python .\plot_timeline.py --input .\results\rms_memory_penalty\timeline.csv --output-dir .\results\rms_memory_penalty\plots
+```
+
+Timeline prikaz je posebno koristan za preemptive algoritme kao što su Round Robin, SRT i RMS, jer prikazuje kada je proces prekinut i kada je nastavio izvršavanje.
+
 ## Workload fajlovi
 
 Workload-i se nalaze u `data/` folderu.
@@ -156,6 +266,39 @@ Polja:
 - `memory_tier`— memorijski tier procesa
 - `memory_intensity`— stepen osetljivosti procesa na memorijski penal
 
+## Periodični workload fajlovi
+
+Periodični workload se koristi za RMS algoritam.
+
+Primer:
+
+```json
+{
+  "simulation_time": 20,
+  "tasks": [
+    {
+      "task_id": "T1",
+      "period": 5,
+      "execution_time": 1,
+      "relative_deadline": 5,
+      "memory_tier": "local_dram",
+      "memory_intensity": 0.2
+    }
+  ]
+}
+```
+
+Polja:
+
+- `simulation_time` - do kog vremena se generišu instance periodičnih taskova
+- `tasks` - lista periodičnih taskova
+- `task_id` - identifikator periodičnog taska
+- `period` - period ponavljanja
+- `execution_time` - vreme izvršavanja svake instance
+- `relative_deadline` - rok relativan u odnosu na arrival time instance
+- `memory_tier` - memorijski tier taska
+- `memory_intensity` - stepen osetljivosti na memorijski penal
+
 ## Eksperimentalni scenariji
 
 Trenutno postoje sledeći scenariji:
@@ -169,11 +312,18 @@ Scenario koji pokazuje razliku između SPN i HRRN algoritama. SPN favorizuje kra
 `workload_remote_memory.json`
 Scenario sa procesima koji imaju različite memorijske karakteristike. Koristi se za poređenje rezultata bez memorijskog penala i sa različitim vrednostima `memory_penalty_factor`.
 
+`periodic_tasks_basic.json`  
+Scenario sa periodičnim real-time taskovima. Koristi se za testiranje RMS algoritma i prikaz preemptive ponašanja periodičnih taskova kroz timeline/Gantt grafikon.
+
 ## Rezultati
 
-Za svaki eksperiment generišu se 2 CSV fajla:
-`metrics.csv
-schedule.csv`
+Za svaki eksperiment generišu se CSV fajlovi:
+
+```txt
+metrics.csv
+schedule.csv
+timeline.csv
+```
 
 `metrics.csv` sadrži zbirne mere po algoritmu:
 
@@ -201,6 +351,14 @@ schedule.csv`
 - memory_tier
 - memory_intensity
 
+`timeline.csv` sadrži stvarne segmente izvršavanja procesa i koristi se za Gantt/timeline prikaz:
+
+- algorithm_name
+- pid
+- start_time
+- end_time
+- duration
+
 ## Ograničenja simulacije
 
 Ovaj projekat je simulator, ne realni operativni sistem.
@@ -219,20 +377,27 @@ Zbog toga rezultate treba posmatrati kao analizu ponašanja algoritama pod kontr
 
 ## Trenutni status
 
-Implementirana je prva funkcionalna verzija projekta:
+Implementirana je funkcionalna verzija projekta:
 
-- algoritmi raspoređivanja
+- osnovni modeli procesa
+- modeli periodičnih taskova
+- algoritmi raspoređivanja: FCFS, Round Robin, SPN, SRT, HRRN i RMS
 - JSON workload loader
-- izračunavanje metrika
+- periodic task loader
+- generator procesnih instanci iz periodičnih taskova
+- izračunavanje real-time metrika
 - memory penalty model
 - CSV export
 - batch runner za eksperimente
-- generisanje grafikona
+- generisanje zbirnih grafikona
+- generisanje Gantt/timeline prikaza
+- početna analiza rezultata u `docs/analysis.md`
 
 Planirana moguća proširenja:
 
-- RMS algoritam za periodične real-time zadatke
-- generisanje Gantt/timeline prikaza
-- dodatni workload scenariji
-- bolja analiza rezultata u posebnom dokumentu
+- dodatni periodic workload scenariji
+- automatsko uključivanje RMS eksperimenata u batch runner
+- poređenje RMS ponašanja sa i bez memory penalty modela kroz zbirne grafikone
+- grupisanje timeline prikaza po originalnom periodic task-u
+- dodatna analiza rezultata u seminarskom radu
 - Linux user-space eksperiment za merenje jitter-a
