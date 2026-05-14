@@ -250,6 +250,26 @@ combined_metrics.csv
 combined_periodic_metrics.csv
 ```
 
+### 8.1 Basic workload — deadline miss ratio
+
+![Deadline miss ratio basic workload](./assets/deadline_miss_basic.png)
+
+### 8.2 SPN vs HRRN workload
+
+![Deadline miss ratio SPN vs HRRN](./assets/deadline_miss_spn_vs_hrrn.png)
+
+### 8.3 Memory penalty scenario
+
+![Deadline miss ratio with memory penalty](./assets/deadline_miss_memory_penalty_0_5.png)
+
+### 8.4 Memory penalty trend
+
+![Memory penalty deadline miss trend](./assets/memory_penalty_deadline_trend.png)
+
+### 8.5 RMS timeline prikaz
+
+![RMS timeline with memory penalty](./assets/rms_timeline_memory_penalty_0_5.png)
+
 ## 9. Analiza rezultata
 
 ### 9.1 Klasični workload-i
