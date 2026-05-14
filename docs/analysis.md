@@ -153,7 +153,7 @@ Slično tome, kod RMS algoritma niže-prioritetni periodic task može biti preki
 
 Timeline/Gantt prikaz je koristan zato što objašnjava zašto algoritmi imaju određene metrike. CSV metrike pokazuju rezultat, dok timeline pokazuje redosled izvršavanja koji je doveo do tog rezultata.
 
-## 7. Najstabilniji algoritmi u dosadašnjim eksperimentima
+## 8. Najstabilniji algoritmi u dosadašnjim eksperimentima
 
 Na osnovu trenutnih scenarija, SRT se pokazuje kao jedan od najstabilnijih algoritama u pogledu deadline ponašanja.
 
@@ -167,7 +167,7 @@ Round Robin je koristna za odzivnost, ali ne i za garantovanje rokova.
 
 FCFS je najjednostavniji, ali često najosetljiviji na problem dugog procesa koji izgladnjuje ostale.
 
-## 8. Ograničenja trenutne analize
+## 9. Ograničenja trenutne analize
 
 Trenutni simulator koristi pojednostavljen model izvršavanja procesa. Rezultate treba posmatrati kao analizu ponašanja algoritama pod kontrolisanim uslovima, a ne kao precizno merenje realnog operativnog sistema.
 
@@ -185,7 +185,7 @@ Glavna ograničenja su:
 
 Zbog toga je cilj simulatora da pokaže trendove i relativne razlike između algoritama, a ne da predvidi tačne performanse realnog sistema.
 
-## 9. Zaključci trenutne verzije
+## 10. Zaključci trenutne verzije
 
 Trenutna verzija simulatora pokazuje nekoliko važnih stvari:
 
