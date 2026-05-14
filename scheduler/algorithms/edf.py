@@ -7,44 +7,16 @@ from scheduler.models import (
 from scheduler.timeline import add_exec_segment
 
 
-def get_task_id_from_process_id(process_id: str) -> str:
+def schedule_edf(processes: list[Process]) -> SchedulingResult:
     """
-    Izvlaci periodicne task_id-eve iz id-eva generisanih procesa.
+    Earliest Deadline First scheduling.
 
-    Primer:
-      T1_0 -> T1
-      T2_3 -> T2
+    EDF je preemptive real-time scheduling algoritam.
 
-    Koristi rsplit da bi task_id-evi sa '_' i dalje radili.
-    Primer:
-      TASK_FAST_0 -> TASK_FAST
-    """
+    U svakom trenutku bira se dostupni proces sa najranijim deadline-om.
 
-    return process_id.rsplit("_", 1)[0]
-
-
-def schedule_rms(
-    processes: list[Process], task_periods: dict[str, int]
-) -> SchedulingResult:
-    """
-    Rate Monotonic Scheduling.
-
-    RMS je preemptive fixed-priority za periodicne zadatke.
-
-    Pravilo prioriteta:
-      kraci period = visi prioritet
-
-    Funkcija prima konkretne procese/poslove generisanih iz periodicnih
-    task-ova, npr:
-
-      T1_0, T1_1, T2_0, ...
-
-    task_periods mapira originalan task_id na njegov period:
-
-      {
-        "T1": 5,
-        "T2": 10,
-      }
+    Priority rule:
+      earlier absolute deadline = higher priority
     """
 
     if not processes:
@@ -76,7 +48,6 @@ def schedule_rms(
             and remaining_times[index] > 0
         ]
 
-        # ako nema dostupnih procesa, skoci na sledeci arrival_time
         if not avaliable_processes:
             future_arrival_times = [
                 process.arrival_time
@@ -90,33 +61,20 @@ def schedule_rms(
             current_time = min(future_arrival_times)
             continue
 
-        def priority_key(item: tuple[int, Process]) -> tuple[int, int, int]:
-            index, process = item
-
-            task_id = get_task_id_from_process_id(process.pid)
-
-            if task_id not in task_periods:
-                raise ValueError(
-                    f"Missing period for task '{task_id}'."
-                    f"Process id was '{process.pid}'."
-                )
-
-            period = task_periods[task_id]
-
-            return (
-                period,  # manji period = veci prioritet
-                process.arrival_time,
-                index,
-            )
-
-        selected_index, selected_process = min(avaliable_processes, key=priority_key)
+        selected_index, selected_process = min(
+            avaliable_processes,
+            key=lambda item: (
+                item[1].deadline,
+                item[1].arrival_time,
+                item[0],
+            ),
+        )
 
         if selected_index not in first_start_times:
             first_start_times[selected_index] = current_time
 
         segment_start_time = current_time
 
-        # RMS je prekidan, zato simuliramo jednu po jednu vremensku jedinicu
         remaining_times[selected_index] -= 1
         current_time += 1
 
@@ -143,7 +101,7 @@ def schedule_rms(
                     base_burst_time=selected_process.resolved_base_burst_time,
                 )
             )
+
     return SchedulingResult(
-        scheduled_processes=completed_processes,
-        execution_segments=execution_segments,
+        scheduled_processes=completed_processes, execution_segments=execution_segments
     )

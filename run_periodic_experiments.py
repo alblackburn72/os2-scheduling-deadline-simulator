@@ -53,7 +53,7 @@ def build_experiments(output_root: Path) -> list[PeriodicExperiment]:
 def run_experiment(experiment: PeriodicExperiment) -> None:
     command = [
         sys.executable,
-        "run_rms.py",
+        "run_rms_edf.py",
         str(experiment.workload_path),
         "--output-dir",
         str(experiment.output_dir),

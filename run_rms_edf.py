@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 
 from scheduler.algorithms.rms import schedule_rms
+from scheduler.algorithms.edf import schedule_edf
 from scheduler.csv_exporter import (
     export_metrics_to_csv,
     export_schedule_to_csv,
@@ -18,7 +19,7 @@ DEFAULT_OUTPUT_DIR = Path("results/rms")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run RMS scheduling on a periodic task workload"
+        description="Run periodic scheduling algorithms on a periodic task workload"
     )
 
     parser.add_argument(
@@ -74,35 +75,51 @@ def main() -> None:
 
     task_periods = {task.task_id: task.period for task in workload.tasks}
 
-    result = schedule_rms(processes, task_periods)
+    scheduling_results = {
+        "RMS": schedule_rms(processes, task_periods),
+        "EDF": schedule_edf(processes),
+    }
 
-    metrics = calculate_metrics("RMS", result.scheduled_processes)
+    completed_schedules = {
+        algorithm_name: result.scheduled_processes
+        for algorithm_name, result in scheduling_results.items()
+    }
+
+    timelines = {
+        algorithm_name: result.execution_segments
+        for algorithm_name, result in scheduling_results.items()
+    }
+
+    all_metrics = [
+        calculate_metrics(algorithm_name, scheduled_processes)
+        for algorithm_name, scheduled_processes in completed_schedules.items()
+    ]
 
     print(f"Loaded periodic workload: {args.workload_path}")
     print(f"Simulation time: {workload.simulation_time}")
     print(f"Periodic task count: {len(workload.tasks)}")
     print(f"Generated process count: {len(processes)}")
 
-    print()
-    print("RMS schedule:")
+    for algorithm_name, scheduled_processes in completed_schedules.items():
+        print()
+        print(f"{algorithm_name} schedule:")
+        for process in scheduled_processes:
+            print(
+                f"{process.pid}: "
+                f"base_burst={process.resolved_base_burst_time}, "
+                f"effective_burst={process.effective_burst_time}, "
+                f"arrival={process.arrival_time}, "
+                f"start={process.start_time}, "
+                f"completion={process.completion_time}, "
+                f"deadline={process.deadline}, "
+                f"turnaround={process.turnaround_time}, "
+                f"waiting={process.waiting_time}, "
+                f"response={process.response_time}, "
+                f"deadline_missed={process.deadline_missed}"
+            )
 
-    for process in result.scheduled_processes:
-        print(
-            f"{process.pid}: "
-            f"base_burst={process.resolved_base_burst_time}, "
-            f"effective_burst={process.effective_burst_time}, "
-            f"arrival={process.arrival_time}, "
-            f"start={process.start_time}, "
-            f"completion={process.completion_time}, "
-            f"deadline={process.deadline}, "
-            f"turnaround={process.turnaround_time}, "
-            f"waiting={process.waiting_time}, "
-            f"response={process.response_time}, "
-            f"deadline_missed={process.deadline_missed}"
-        )
-
-    print()
-    print(metrics)
+        print()
+        print(calculate_metrics(algorithm_name, scheduled_processes))
 
     output_dir = Path(args.output_dir)
 
@@ -110,9 +127,9 @@ def main() -> None:
     schedule_output_path = output_dir / "schedule.csv"
     timeline_output_path = output_dir / "timeline.csv"
 
-    export_metrics_to_csv([metrics], metrics_output_path)
-    export_schedule_to_csv({"RMS": result.scheduled_processes}, schedule_output_path)
-    export_timeline_to_csv({"RMS": result.execution_segments}, timeline_output_path)
+    export_metrics_to_csv(all_metrics, metrics_output_path)
+    export_schedule_to_csv(completed_schedules, schedule_output_path)
+    export_timeline_to_csv(timelines, timeline_output_path)
 
     print()
     print(f"Metrics exported to: {metrics_output_path}")
