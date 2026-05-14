@@ -139,6 +139,7 @@ os2-scheduling-deadline-simulator/
 ├── main.py
 ├── run_experiments.py
 ├── run_rms.py
+├── run_periodic_experiments.py
 ├── plot_results.py
 ├── plot_timeline.py
 ├── requirements.txt
@@ -208,6 +209,37 @@ Ova skripta pokreće više scenarija i generiše rezultate u folderu:
 Glavni zbirni fajl:
 `results/experiments/combined_metrics.csv`
 
+## Pokretanje periodičnih RMS eksperimenata
+
+Periodični RMS eksperimenti se pokreću posebnom skriptom:
+
+```powershell
+python .\run_periodic_experiments.py
+```
+
+Ova skripta pokreće RMS nad periodičnim workload-om sa više vrednosti `memory_penalty_factor`.
+
+Rezultati se čuvaju u:
+
+```txt
+results/periodic_experiments/
+```
+
+Glavni zbirni fajl za periodične eksperimente je:
+
+```txt
+results/periodic_experiments/combined_periodic_metrics.csv
+```
+
+Primeri pojedinačnih RMS eksperimenata:
+
+```txt
+rms_basic
+rms_memory_penalty_factor_0_25
+rms_memory_penalty_factor_0_5
+rms_memory_penalty_factor_1_0
+```
+
 ## Generisanje grafikona
 
 Nakon pokretanja eksperimenata, grafikoni se generišu komandom:
@@ -232,10 +264,10 @@ Primer za običan workload:
 python .\plot_timeline.py --input .\results\timeline_test\timeline.csv --output-dir .\results\timeline_test\plots
 ```
 
-Primer za RMS workload:
+Primer za RMS periodic workload:
 
 ```powershell
-python .\plot_timeline.py --input .\results\rms_memory_penalty\timeline.csv --output-dir .\results\rms_memory_penalty\plots
+python .\plot_timeline.py --input .\results\periodic_experiments\rms_memory_penalty_factor_0_5\timeline.csv --output-dir .\results\periodic_experiments\rms_memory_penalty_factor_0_5\plots
 ```
 
 Timeline prikaz je posebno koristan za preemptive algoritme kao što su Round Robin, SRT i RMS, jer prikazuje kada je proces prekinut i kada je nastavio izvršavanje.
@@ -379,25 +411,23 @@ Zbog toga rezultate treba posmatrati kao analizu ponašanja algoritama pod kontr
 
 Implementirana je funkcionalna verzija projekta:
 
-- osnovni modeli procesa
-- modeli periodičnih taskova
 - algoritmi raspoređivanja: FCFS, Round Robin, SPN, SRT, HRRN i RMS
-- JSON workload loader
-- periodic task loader
+- JSON workload loader za obične procese
+- JSON loader za periodične real-time taskove
 - generator procesnih instanci iz periodičnih taskova
 - izračunavanje real-time metrika
-- memory penalty model
-- CSV export
-- batch runner za eksperimente
+- memory penalty model za sporiji/udaljeni memorijski tier
+- CSV export rezultata
+- batch runner za obične eksperimente
+- batch runner za periodične RMS eksperimente
 - generisanje zbirnih grafikona
-- generisanje Gantt/timeline prikaza
+- generisanje timeline/Gantt prikaza
 - početna analiza rezultata u `docs/analysis.md`
 
 Planirana moguća proširenja:
 
 - dodatni periodic workload scenariji
-- automatsko uključivanje RMS eksperimenata u batch runner
-- poređenje RMS ponašanja sa i bez memory penalty modela kroz zbirne grafikone
+- automatski grafikoni za `combined_periodic_metrics.csv`
 - grupisanje timeline prikaza po originalnom periodic task-u
 - dodatna analiza rezultata u seminarskom radu
 - Linux user-space eksperiment za merenje jitter-a
